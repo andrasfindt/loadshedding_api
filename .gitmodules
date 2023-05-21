@@ -1,0 +1,3 @@
+[submodule "eskom-calendar"]
+	path = eskom-calendar
+	url = git@github.com:beyarkay/eskom-calendar.git
