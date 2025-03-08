@@ -56,27 +56,19 @@ def get_schedule_for_block(block):
        description:
     """
     current_stage = HTTP_CLIENT.get_current_active_stage()
-
-    d = datetime.datetime.now()
-    today = d.strftime("%d")
-    
-    
-    
-
-    # slots_all = list(
-    #     map(
-    #         lambda y: (
-    #             {"start_time": y["start_time"], "finish_time": y["finish_time"]}
-    #         ),
-    #         filter(
-    #             lambda x: (x["stage"] <= current_stage and x["date_of_month"] == today),
-    #             STAGES[f"stage-{block}"],
-    #         ),
-    #     )
-    # )
-    # slots = list({v["start_time"]: v for v in slots_all}.values())
-    # return jsonify({"schedule": slots, "day": today, "current_stage": current_stage})
-    return jsonify({})
+    today = str(int(datetime.datetime.now().strftime("%d")))  # remove leading zero
+    schedule = map_schedule_to_blocks(HTTP_CLIENT.get_full_schedule())
+    slots_all = list(
+        map(
+            lambda y: ({"start": y["start"], "end": y["end"]}),
+            filter(
+                lambda x: (x["stage"] <= current_stage and x["day"] == today),
+                schedule[block],
+            ),
+        )
+    )
+    slots = list({v["start"]: v for v in slots_all}.values())
+    return jsonify({"schedule": slots, "day": today, "stage": current_stage})
 
 
 @app.route("/schedule", methods=["GET"])
@@ -87,11 +79,24 @@ def get_schedule():
      200:
        description:
     """
-    
-    schedule = HTTP_CLIENT.get_full_schedule()
-    blocks = sorted(set(map(lambda x: x['blockId'], schedule)))
-    new_schedule = [[y['']] for x in blocks]
-    return jsonify(blocks)
+    schedule = map_schedule_to_blocks(HTTP_CLIENT.get_full_schedule())
+    return jsonify(schedule)
+
+
+def map_schedule_to_blocks(schedule):
+    return {
+        f'{x}': [
+            {
+                "day": y["dayId"],
+                "stage": y["stageId"],
+                "start": y["timeRange"].split("-")[0],
+                "end": y["timeRange"].split("-")[1],
+            }
+            for y in schedule
+            if y["blockId"] == x
+        ]
+        for x in sorted(set(map(lambda x: x["blockId"], schedule)))
+    }
 
 
 @app.route("/stage", methods=["GET"])
