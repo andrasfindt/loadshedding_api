@@ -37,6 +37,25 @@ swagger = Swagger(app, config=swagger_config)
 HTTP_CLIENT = CityPowerAPI()
 
 
+def map_schedule_to_blocks(schedule):
+    return {
+        f'{x}': [
+            {
+                "day": str(y["dayId"]),
+                "stage": y["stageId"],
+                "start": y["timeRange"].split("-")[0],
+                "end": y["timeRange"].split("-")[1],
+            }
+            for y in schedule
+            if y["blockId"] == x
+        ]
+        for x in sorted(set(map(lambda x: x["blockId"], schedule)))
+    }
+    
+    
+SCHEDULE = map_schedule_to_blocks(HTTP_CLIENT.get_full_schedule())
+
+
 @app.route("/", methods=["GET"])
 def root():
     return redirect("/apidocs", code=308)
@@ -57,12 +76,12 @@ def get_schedule_for_block(block):
     """
     current_stage = HTTP_CLIENT.get_current_active_stage()
     today = str(int(datetime.datetime.now().strftime("%d")))  # remove leading zero
-    schedule = map_schedule_to_blocks(HTTP_CLIENT.get_full_schedule())
+    schedule = SCHEDULE
     slots_all = list(
         map(
             lambda y: ({"start": y["start"], "end": y["end"]}),
             filter(
-                lambda x: (x["stage"] <= current_stage and x["day"] == today),
+                lambda x: (int(x["stage"]) <= int(current_stage) and x["day"] == today),
                 schedule[block],
             ),
         )
@@ -79,24 +98,8 @@ def get_schedule():
      200:
        description:
     """
-    schedule = map_schedule_to_blocks(HTTP_CLIENT.get_full_schedule())
-    return jsonify(schedule)
-
-
-def map_schedule_to_blocks(schedule):
-    return {
-        f'{x}': [
-            {
-                "day": y["dayId"],
-                "stage": y["stageId"],
-                "start": y["timeRange"].split("-")[0],
-                "end": y["timeRange"].split("-")[1],
-            }
-            for y in schedule
-            if y["blockId"] == x
-        ]
-        for x in sorted(set(map(lambda x: x["blockId"], schedule)))
-    }
+    SCHEDULE = map_schedule_to_blocks(HTTP_CLIENT.get_full_schedule())
+    return jsonify(SCHEDULE)
 
 
 @app.route("/stage", methods=["GET"])
