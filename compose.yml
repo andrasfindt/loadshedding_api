@@ -1,0 +1,12 @@
+services:
+  loadshedding:
+    container_name: loadshedding
+    image: "docker.io/andrasfindt/loadshedding_api:2.0.0"
+    hostname: loadshedding
+    restart: unless-stopped
+    ports:
+      - "21445:21445"
+    environment:
+      - SSL_ENABLED=false
+      - DEBUG_ENABLED=true
+    

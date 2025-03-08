@@ -47,3 +47,9 @@ class CityPowerAPI:
         stage = self.query_api('/loadshedding-schedule-service/find-current-active-stage')
         current_stage = int(stage)
         return current_stage
+
+
+    def get_full_schedule(self): 
+        schedule = self.query_api('/loadshedding-day-service/findAllInfo')
+        _LOGGER.info(schedule)
+        return schedule
