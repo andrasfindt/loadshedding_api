@@ -89,8 +89,9 @@ def get_schedule():
     """
     
     schedule = HTTP_CLIENT.get_full_schedule()
-  
-    return jsonify(schedule)
+    blocks = sorted(set(map(lambda x: x['blockId'], schedule)))
+    new_schedule = [[y['']] for x in blocks]
+    return jsonify(blocks)
 
 
 @app.route("/stage", methods=["GET"])
